@@ -13,77 +13,104 @@ import ./types
 
 
 #__________________________________________________
-proc chkShader (id :u32) :void=
+# Compilation Error check
+#_____________________________
+proc chk (shader :ShaderVert | ShaderFrag) :void=
+  ## Checks if the Shader was compiled correctly
   var compiled :i32
-  gl.getShaderiv(id, gl.CompileStatus, compiled.addr);
+  gl.getShaderiv(shader.id, gl.CompileStatus, compiled.addr);
   if not compiled.bool:
     var logLength: i32
     var msg = newString(1024)
-    gl.getShaderInfoLog(id, 1024, logLength.addr, msg.cstring);
+    gl.getShaderInfoLog(shader.id, 1024, logLength.addr, msg.cstring);
     echo "::ERR Shader didn't compile correctly:"
     echo msg.join
 #__________________________________________________
-proc chkProgram (id :u32) :void=
+proc chk (prog :ShaderProg) :void=
+  ## Checks if the ShaderProg is valid and was linked correctly
   var ok :i32
-  gl.getProgramiv(id, gl.LinkStatus, ok.addr);
+  gl.getProgramiv(prog.id, gl.LinkStatus, ok.addr);
   if not ok.bool:
     var logLength :i32
     var msg = newString(1024)
-    gl.getProgramInfoLog(id, 1024, logLength.addr, msg.cstring)
+    gl.getProgramInfoLog(prog.id, 1024, logLength.addr, msg.cstring)
     echo "::ERR Shader Program wasn't linked correctly:"
     echo msg.join
-  gl.validateProgram(id)
-  gl.getProgramiv(id, gl.ValidateStatus, ok.addr);
+  gl.validateProgram(prog.id)
+  gl.getProgramiv(prog.id, gl.ValidateStatus, ok.addr);
   if not ok.bool:
     var logLength :i32
     var msg = newString(1024)
-    gl.getProgramInfoLog(id, 1024, logLength.addr, msg.cstring)
+    gl.getProgramInfoLog(prog.id, 1024, logLength.addr, msg.cstring)
     echo "::ERR Shader Program is invalid:"
     echo msg.join
+
 #__________________________________________________
-proc newShaderVert *(file :str) :ShaderVert=
+# Vertex Shader
+#_____________________________
+proc newShaderVertCode *(code :str) :ShaderVert=
+  ## Creates and compiles a new ShaderVert from the given source code string.
   new result
-  # Set the vertex shader
   result.id   = gl.createShader(gl.VertexShader)
-  result.file = file
-  result.src  = file.readFile
+  result.src  = code
   let tmp     = result.src.cstring
   let length  = result.src.len.i32
   gl.shaderSource(result.id, 1, tmp.caddr, length.caddr)
   gl.compileShader(result.id)
-  chkShader(result.id)
+  result.chk()
+#_____________________________
+proc newShaderVert *(file :str) :ShaderVert=  newShaderVertCode(file.readFile)
+  ## Creates and compiles a new ShaderVert from the given source code file.
+
 #__________________________________________________
-proc newShaderFrag *(file :str) :ShaderFrag=
+# Fragment Shader
+#_____________________________
+proc newShaderFragCode *(code :str) :ShaderFrag=
+  ## Creates and compiles a new ShaderFrag from the given source code string.
   new result
-  # Set the fragment shader
   result.id   = gl.createShader(gl.FragmentShader)
-  result.file = file
-  result.src  = file.readFile
+  result.src  = code
   let tmp     = result.src.cstring
   let length  = result.src.len.i32
   gl.shaderSource(result.id, 1, tmp.caddr, length.caddr)
   gl.compileShader(result.id)
-  chkShader(result.id)
+  result.chk()
+#_____________________________
+proc newShaderFrag *(file :str) :ShaderFrag=  newShaderFragCode(file.readFile)
+  ## Creates and compiles a new ShaderFrag from the given source code file.
+
+#__________________________________________________
+# Shader Program
+#_____________________________
+proc newShaderProg *() :ShaderProg=  ShaderProg(id:0)
+  ## Creates a new object, with all values set to 0 or empty
 #__________________________________________________
 proc newShaderProg *(vert :ShaderVert; frag :ShaderFrag) :ShaderProg=
+  ## Creates and compiles a new ShaderProg from the given vert and frag objects.
   new result
   # Join fragment and vertex shader into a shader program
   result.id = gl.createProgram()
   gl.attachShader(result.id, vert.id)
   gl.attachShader(result.id, frag.id)
   gl.linkProgram(result.id)
-  chkProgram(result.id)
+  result.chk()
   # Delete shaders. Linked to the program, and not needed anymore
   gl.deleteShader(vert.id)
   gl.deleteShader(frag.id)
 #__________________________________________________
-proc newShaderProg *(vertFile, fragFile :str) :ShaderProg=
-  var vert = vertFile.newShaderVert
-  var frag = fragFile.newShaderFrag
+proc newShaderProgCode *(vertCode, fragCode :str) :ShaderProg=
+  ## Creates and compiles a new ShaderProg from the given vert+frag source code strings.
+  new result
+  var vert = vertCode.newShaderVertCode
+  var frag = fragCode.newShaderFragCode
   result = newShaderProg(vert, frag)
 #__________________________________________________
-proc newShaderProg *() :ShaderProg=  ShaderProg(id:0)
-  ## Creates a new object, with all values set to 0 or empty
+proc newShaderProg *(vertFile, fragFile :str) :ShaderProg=
+  ## Creates and compiles a new ShaderProg from the given vert+frag source code files.
+  new result
+  var vert = vertFile.newShaderVert
+  var frag = fragFile.newShaderFrag
+  result   = newShaderProg(vert, frag)
 #__________________________________________________
 proc term *(prog :ShaderProg) :void=  gl.deleteProgram(prog.id)
   ## Deletes the target program from OpenGL
@@ -94,4 +121,5 @@ proc get *(shd :ShaderProg; uName :str) :cint=
   result = gl.getUniformLocation(shd.id, uName)
   # if result == -1: log &"ERR : Couldn't get the location of uniform {uName}\tat shader.id = {shd.id}"
 #__________________________________________________
+proc enable *(prog :ShaderProg) :void=  gl.useProgram(prog.id)
 

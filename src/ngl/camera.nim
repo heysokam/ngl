@@ -3,7 +3,6 @@
 #:_______________________________________________
 # ndk dependencies
 import nstd/types  as base
-import nin/types as iTypes
 import nmath
 # Module dependencies
 import ./types

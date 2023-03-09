@@ -13,5 +13,5 @@ const Fill          * = GL_FILL
 
 #____________________
 # Window
-const viewport       * = glViewport
+var   viewport       * = glViewport
 

@@ -22,6 +22,7 @@ import ./window    as w
 import ./camera    as cam
 import ./mesh      as mesh
 import ./texture   as tex
+import ./shader    as shd
 import ./tech      as tech
 import ./light     as light
 import ./tools     as rt
@@ -29,11 +30,11 @@ import ./logger
 import ./C
 
 #__________________________________________________
-# Renderer Core
+# Renderer: Initialize
 #____________________
 proc init *(render :var Renderer; camera :Camera; 
             width, height :u32; title :str; resizable, vsync :bool; prof :RenderProfile= glFour,
-            key :glfw.KeyFun; mousePos :glfw.CursorPosFun; mouseBtn :glfw.MouseButtonFun; mouseScroll :glfw.ScrollFun;
+            key :glfw.KeyFun= nil; mousePos :glfw.CursorPosFun= nil; mouseBtn :glfw.MouseButtonFun= nil; mouseScroll :glfw.ScrollFun= nil;
             log :LogFunc= logger.log;
             ) :void=
   ## Initializes the given Renderer's state.
@@ -44,7 +45,7 @@ proc init *(render :var Renderer; camera :Camera;
   render.cam = camera
   render.win = w.init(width, height, title, resizable, vsync, prof, key, mousePos, mouseBtn, mouseScroll)
   gl.init()  # Load OpenGL context
-  w.resize(render.win.ct, width.i32, height.i32)  # Set the initial viewport window, position and size
+  w.resize(render.win.ct, width.i32, height.i32)  # Set the initial viewport position and size
 
   gl.setDebug()  # Enable OpenGL debugging
   gl.setBlend()  # Set OpenGL blending mode
@@ -54,6 +55,27 @@ proc init *(render :var Renderer; camera :Camera;
   log &"Initialized {render.profile.name}: {$render.profile.vers.major.i32}.{$render.profile.vers.minor.i32}"
   # logGLparms()
 
+#__________________________________________________
+# Renderer: Draw
+#____________________
+proc draw (inds :EBO) :void=  gl.drawElements(gl.Tris, inds.csizeof, gl.uInt, nil)
+  ## Alias for internal readability.
+  ## Draws the currently bound VAO, using the given EBO.
+#____________________
+proc draw *(mesh :RenderMesh) :void=
+  ## Simple draw the given mesh, without any transformation.
+  mesh.vao.enable()   # Define what will be rendered (VAO)
+  mesh.shd.enable()   # Enable the shader program of the mesh
+  mesh.inds.draw()    # Render it
+  mesh.vao.disable()  # Clean OpenGL state for this frame, without deleting the object data
+
+
+
+
+
+##[
+#__________________________________________________
+# TODO: Fix mess, old temp behavior
 #____________________
 proc draw (r :Renderer; mesh :RenderMesh; tech :var RenderTech; mvp, model, view, proj :var Mat4) :void=
   # Define how data will be rendered (Technique: program and uniforms)
@@ -119,4 +141,7 @@ proc draw *(r :Renderer; body :RenderBody; tech :var RenderTech; mvp, model, vie
   if body.mdl.len == 0: return  # Allow passing empty bodies. Just skip drawing them.
   # Draw every mesh of the body
   for mesh in body.mdl: r.draw(mesh, tech, mvp, model, view, proj)
+]##
+
+
 

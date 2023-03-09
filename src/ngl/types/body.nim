@@ -6,7 +6,7 @@ import nmath/types as m
 # Module dependencies
 import ./buffer
 import ./shader
-import ./texture
+import ./material
 
 #____________________
 # Mesh / Model
@@ -15,7 +15,7 @@ type RenderMesh * = object
   vao   *:VAO         ## Contains the vao.id and all VBO attributes data and metadata
   inds  *:Indices     ## Contains the EBO id and the indices data
   shd   *:ShaderProg  ## Shader program used to render this set of vertex
-  tex   *:Texture     # TODO: Should be a Material, and each material should be a seq[Texture]
+  mats  *:Materials   ## Materials used by the mesh. Each material will be a seq of Textures
 #____________________
 type RenderModel * = seq[RenderMesh]
 

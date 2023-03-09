@@ -11,6 +11,7 @@ import ./types/profile             ; export profile
 import ./types/shader              ; export shader
 import ./types/uniform             ; export uniform
 import ./types/texture             ; export texture
+import ./types/material            ; export material
 import ./types/buffer              ; export buffer
 import ./types/body    as rBody    ; export rBody
 import ./types/light   as lgtType  ; export lgtType

@@ -28,15 +28,15 @@ const Diffuse                   * = GL_TEXTURE0
 ### Tex: Parameters
 var   texParameteri             * = glTexParameteri
 const Tex2D                     * = GL_TEXTURE_2D
-const FilterMag                 * = GL_TEXTURE_MAG_FILTER
-const FilterMin                 * = GL_TEXTURE_MIN_FILTER
-const Nearest                   * = GL_NEAREST
 const WrapS                     * = GL_TEXTURE_WRAP_S
 const WrapT                     * = GL_TEXTURE_WRAP_T
 const Clamp                     * = GL_CLAMP
 const Repeat                    * = GL_REPEAT
-const LinearMipmapLinear        * = GL_LINEAR_MIPMAP_LINEAR
+const FilterMag                 * = GL_TEXTURE_MAG_FILTER
+const FilterMin                 * = GL_TEXTURE_MIN_FILTER
+const Nearest                   * = GL_NEAREST
 const Linear                    * = GL_LINEAR
+const LinearMipmapLinear        * = GL_LINEAR_MIPMAP_LINEAR
 ### Tex: Formats
 const Rgba                      * = GL_RGBA
 const Rgba8                     * = GL_RGBA8

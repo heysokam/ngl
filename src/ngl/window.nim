@@ -4,7 +4,7 @@
 # std dependencies
 import std/strformat
 # External dependencies
-from pkg/staticglfw as glfw import nil
+from   pkg/staticglfw as glfw import nil
 # ndk dependencies
 import nstd/types as base
 import nstd/auto
@@ -63,7 +63,7 @@ proc term *(w :Window) :void=
   glfw.destroyWindow(w.ct)
   glfw.terminate()
 #____________________
-proc exit *(win :glfw.Window) :bool=  glfw.windowShouldClose(win).bool
+proc exit *(win :Window) :bool=  glfw.windowShouldClose(win.ct).bool
   ## Returns true if the given window has been marked for closing.
 
 #____________________

@@ -1,6 +1,6 @@
-#:_______________________________________________
-#  ngl : Copyright (C) Ivan Mar (sOkam!) : MIT  :
-#:_______________________________________________
+#:___________________________________________________
+#  ngl  |  Copyright (C) Ivan Mar (sOkam!)  |  MIT  :
+#:___________________________________________________
 
 import ./ngl/types   as rTypes   ; export rTypes
 import ./ngl/core    as rCore    ; export rCore

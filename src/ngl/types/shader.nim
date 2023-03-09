@@ -6,6 +6,7 @@ import nstd/types
 # Module dependencies
 import ./base  as rTypes
 
+
 #____________________
 type ShaderBase * = ref object of OpenGLObj
   file *:str  ## File path where this shader is read from

@@ -11,12 +11,13 @@ from   ./gl        as gl import nil
 import ./types
 import ./shader
 import ./texture
+import ./material
 import ./color
 import ./C as Cgl
 #____________________
 
 #_______________________________________________________
-# Empty Type Generation
+# Constructors: Empty
 #______________________________
 proc newGLAttrib () :OpenGLAttrib= 
   new result
@@ -25,12 +26,13 @@ proc newGLAttrib () :OpenGLAttrib=
   result.size = 0
   result.typ  = gl.Enum(0)
 #____________________
-proc newVBO [T]() :VBO[T]=
+proc newVBO [T](data :seq[T]= @[]) :VBO[T]=
   new result
   result.id   = u32.high
-  result.data = @[]
+  result.data = data
 #____________________
-proc newMeshAttrib (T :typedesc) :MeshAttribute[T]=  MeshAttribute[T](attr: newGLAttrib(), vbo: newVBO[T]())
+proc newMeshAttrib (T :typedesc) :MeshAttribute[T]=
+  MeshAttribute[T](attr: newGLAttrib(), vbo: newVBO[T]())
 #____________________
 proc newVAO () :VAO=
   new result
@@ -39,18 +41,18 @@ proc newVAO () :VAO=
   result.uv    = newMeshAttrib(Vec2)
   result.norm  = newMeshAttrib(Vec3)
 #____________________
-proc newEBO [T]() :EBO[T]=
+proc newEBO [T](data :seq[T]= @[]) :EBO[T]=
   new result
   result.id   = u32.high
-  result.data = @[]
+  result.data = data
 #____________________
 proc newRenderMesh *() :RenderMesh= 
   ## Creates a new RenderMesh, with all values set to 0 or empty
-  RenderMesh(vao: newVAO(), inds: newEBO[UVec3](), shd: newShaderProg(), tex: newTexture())
+  RenderMesh(vao: newVAO(), inds: newEBO[UVec3](), shd: newShaderProg(), mats: @[])
 #_______________________________________________________
 
 #_______________________________________________________
-# Normal Type Generation
+# Constructors: General
 #____________________
 proc newGLAttrib *[T](name :str; id :u32; typ :typedesc[T]) :OpenGLAttrib=
   new result
@@ -61,14 +63,65 @@ proc newGLAttrib *[T](name :str; id :u32; typ :typedesc[T]) :OpenGLAttrib=
   when T is Color: result.size = 4; result.stride = result.size * sizeof(float32).i32
   elif T is Vec3:  result.size = 3; result.stride = result.size * sizeof(float32).i32
   elif T is Vec2:  result.size = 2; result.stride = result.size * sizeof(float32).i32
+#____________________
+proc newMeshAttrib [T](t :typedesc; data: seq[T]; attr :Attr) :MeshAttribute[T]=
+  MeshAttribute[T](attr: newGLAttrib($attr, attr, t), vbo: newVBO(data))
+#____________________
+proc newVAO (
+    verts   :seq[Vec3];
+    colors  :seq[Color]=  @[]; 
+    uvs     :seq[Vec2]=   @[]; 
+    norms   :seq[Vec3]=   @[];
+    ) :VAO=
+  new result
+  result.pos   = newMeshAttrib(Vec3,  verts,  Attr.aPos)
+  result.color = newMeshAttrib(Color, colors, Attr.aColor)
+  result.uv    = newMeshAttrib(Vec2,  uvs,    Attr.aUV)
+  result.norm  = newMeshAttrib(Vec3,  norms,  Attr.aNorm)
+#____________________
+proc newRenderMesh *(
+    verts    :seq[Vec3];
+    inds     :seq[UVec3];
+    colors   :seq[Color]=  @[];
+    uvs      :seq[Vec2]=   @[];
+    norms    :seq[Vec3]=   @[];
+    shader   :ShaderProg;
+    mats     :Materials=   @[];
+    ) :RenderMesh=
+  ## Creates a new RenderMesh from the given data.
+  ## Vertex positions and indices are mandatory. The other vertex attributes are optional.
+  ## A valid compiled ShaderProg must be provided.
+  ## Materials will be empty if omitted.
+  RenderMesh(
+    vao:  newVAO(verts, colors, uvs, norms),
+    inds: newEBO(inds),
+    shd:  shader,
+    mats: mats  )
+#____________________
+proc newRenderMesh *(
+    verts    :seq[Vec3];
+    inds     :seq[UVec3];
+    colors   :seq[Color]=  @[];
+    uvs      :seq[Vec2]=   @[];
+    norms    :seq[Vec3]=   @[];
+    vertFile :str;
+    fragFile :str;
+    mats     :Materials=   @[];
+    ) :RenderMesh=
+  ## Creates a new RenderMesh from the given data.
+  ## Vertex positions and indices are mandatory. The other vertex attributes are optional.
+  ## Valid paths to vertex and fragment shader code files must be provided.
+  ## Materials will be empty if omitted.
+  newRenderMesh(verts, inds, colors, uvs, norms, newShaderProg(vertFile, fragFile), mats)
 
 #______________________________
 # Content Checks
 #____________________
-template hasPos   *(v :VAO) :bool=  v.pos.vbo.data.len   > 0  ## Checks whether or not the target VAO contains a position vbo, by calculating the length of the vbo.data
-template hasColor *(v :VAO) :bool=  v.color.vbo.data.len > 0  ## Checks whether or not the target VAO contains a colors   vbo, by calculating the length of the vbo.data
-template hasUV    *(v :VAO) :bool=  v.uv.vbo.data.len    > 0  ## Checks whether or not the target VAO contains a UVs      vbo, by calculating the length of the vbo.data
-template hasNorm  *(v :VAO) :bool=  v.norm.vbo.data.len  > 0  ## Checks whether or not the target VAO contains a normals  vbo, by calculating the length of the vbo.data
+template hasPos   *(v :VAO) :bool=  v.pos.vbo.data.len   > 0  ## Checks if the target VAO contains a position vbo, by calculating the length of the vbo.data
+template hasColor *(v :VAO) :bool=  v.color.vbo.data.len > 0  ## Checks if the target VAO contains a colors   vbo, by calculating the length of the vbo.data
+template hasUV    *(v :VAO) :bool=  v.uv.vbo.data.len    > 0  ## Checks if the target VAO contains a UVs      vbo, by calculating the length of the vbo.data
+template hasNorm  *(v :VAO) :bool=  v.norm.vbo.data.len  > 0  ## Checks if the target VAO contains a normals  vbo, by calculating the length of the vbo.data
+template hasMats  *(mesh :RenderMesh) :bool=  mesh.mats.len > 0  ## Checks if the given mesh has any materials attached
 
 #__________________________________________________
 # TODO: Better naming system for objects
@@ -141,7 +194,7 @@ proc register (vao :VAO; ebo :var EBO) :void=
   gl.vertexArrayElementBuffer(vao.id, ebo.id)
 
 #______________________________
-proc register (mesh :var RenderMesh) :void=
+proc register *(mesh :var RenderMesh) :void=
   ## Upload, bind and link all data and information from the given mesh into OpenGL (DSA)
   if not mesh.vao.hasPos: return  # Stop reading if no vertex, because other data will be irrelevant in that case
   mesh.vao.register                                                     # Register the VAO itself
@@ -150,7 +203,7 @@ proc register (mesh :var RenderMesh) :void=
   if mesh.vao.hasColor: mesh.vao.register(mesh.vao.color, Attr.aColor)  # Register the Colors
   if mesh.vao.hasUV:    mesh.vao.register(mesh.vao.uv,    Attr.aUV)     # Register the UVs
   if mesh.vao.hasNorm:  mesh.vao.register(mesh.vao.norm,  Attr.aNorm)   # Register the Normals
-  mesh.tex.register                                                     # Register the Materials/Textures
+  mesh.mats.register                                                     # Register the Materials/Textures
 #______________________________
 proc register *(model :var RenderModel) :void=
   ## Upload, bind and link all data and information 
@@ -184,8 +237,9 @@ proc term *(m :RenderMesh) :void=
   # log &"Terminating object: {m.name}"
   m.vao.term
   m.inds.term
-#__________________________________________________
 
+#__________________________________________________
 proc term *(obj :RenderBody) :void=
   ## Terminates all data for all meshes of the target RenderBody
   for m in obj.mdl: m.term
+
