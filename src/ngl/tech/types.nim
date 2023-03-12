@@ -30,7 +30,6 @@ type RenderTech * = object
   ## Data related to executing a specific Rendering Technique
   name     *:str           ## Name of the technique. Should be identifiable, for when its used for debugging/logging
   phase    *:RenderPhases  ## Sequence of phases that this technique will execute
-  uniforms *:Uniforms      ## Sequence of uniform data objects that the technique will use
 
 ##[
 RenderTech    # Made of Phases

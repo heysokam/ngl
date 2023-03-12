@@ -22,7 +22,7 @@ The whole scene, or many objects, are rendered to the screen.
 
 **Draw Call**:
 Individual order to the GPU to draw something.  
-This could be a batch, instance or single-object call.  
+This could be batched geometry, instanced objects or a single-object.  
 
 ## Overview
 A technique defines a rendering style, which is made of one or more phases.  
@@ -41,7 +41,7 @@ This means:
 1. Simple technique: The process required to create Blinn-Phong rendering
 2. Advanced techniques could be Deferred rendering, VoxelConeTracing, etc
 3. Adding post-processed Cel-Shading to a Phong pipeline would result in a different tech
-  _(notice how the culture would consider these two things separate techniques, but this library considers them to be one technique composed of two different phases)_
+  _(notice how the culture would consider these two things in example#3 to be separate techniques, but this library considers them to be one technique composed of two different phases)_
 
 Hello Triangle:
 - Technique:  Render points to the screen with a hardcoded color, without any shading.  
@@ -49,9 +49,9 @@ Hello Triangle:
 - Passes:     One. Draw a single triangle to the screen.  
 - Calls:      One. Draw three vertex positions, sorted by their indices.  
 Deferred Rendering:
-- Technique:  Deferred rendering, multiple dynamic lights, no GI, Diffuse materials only.
-- Phases:     Generate the G buffer. Draw the Materials. Draw the lights.
-- Passes:     Inside the G buffer phase: Depth map pass, normal map pass, diffuse map pass. 
+- Technique:  Deferred rendering, multiple dynamic lights, no GI, Diffuse materials only, no transparency.
+- Phases:     Generate the G buffer. Draw the lights.
+- Passes:     Inside the G buffer phase: Depth map pass, normal map pass, diffuse map pass (could result in a single call per object when using MRT). 
 - Calls:      Inside one of the passes: One Call. Draw the vertex positions of the triangle.
 
 Imagine these objects:  
@@ -60,14 +60,14 @@ Imagine these objects:
 - Object Three:  contains Cel-shaded Blinn-Phong texture-based materials.
 How do you draw them all in the same scene, assuming that your rendering pipeline only supports a hardcoded combination of uniforms+shaders?
 
-When you offload this problem to the application, by keeping it agnostic and not providing any type of abstraction over the renderer architecture to handle this, you end up with applications that demand a much much higher base skill level to setup and run with just the bare minimum defaults.  
-Offloading the responsibility is a fair solution, but if the renderer was more flexible in how data is meant to be sent and processed, then this weight wouldn't need to be sent to the application and could stay on the renderer side. Without losing any of its configurability or power in the process.  
+When you offload this problem to the application, by keeping the rendering API agnostic by not providing any type of abstraction over the renderer architecture to handle this, you end up with applications that demand a much much higher base skill level to setup and run with just the bare minimum defaults.  
+Offloading the responsibility is a fair solution, but if the renderer was more concise in how data is meant to be sent and processed, then this weight wouldn't need to be sent to the application and could stay on the renderer side. Without losing any of its configurability or power in the process.  
 
 By creating a way to handle the use of different `RenderTech`s for different `RenderMesh`es, this issue is solved.  
 Applications, then, can implement their own `RenderTech` code without issues if they need them, and still be able to use the rest of the library as normal.  
 
 Another potential solution would be to separate the objects into different types, depending on the way the will be drawn. But then, in order to support new rendering types, the library would need to be rewritten to accommodate for these new types of data. And all its flexibility would be gone.  
-This could be a fair solution when offloading the drawing itself to the app, since data drawn in this way would be very much application-dependent. But, like mentioned, this would raise the baseline skill-level required to use the app by a long shot, it wouldn't really be flexible anymore... or would need to become a renderer-agnostic API to solve the problem, which is not the goal of this library at all.  
+This could be a fair solution when offloading the drawing itself to the app, since data drawn in this way would be very much application-dependent. But, like mentioned, this would raise the baseline skill-level required to use the app by a long shot, it wouldn't really be flexible anymore... or would need to become a renderer-agnostic API to solve the problem, which is not the goal of this library.  
 
 
 # NPR

@@ -1,0 +1,11 @@
+# Stencil Buffer
+The original use for the stencil buffer was for non-3D content. Say you're making a 3D game. Most of the screen is the 3D content, but you also have some GUI around the outside which is not drawn through OpenGL but through a 2D canvas API. You can mask off the shape of the 2D GUI using the stencil buffer, and then make sure that your 3D/OpenGL content won't affect it and won't cause overdraw (which wastes fragment shading time).
+
+As you've seen, it's also used for techniques like shadow volumes and some reflection techniques. In general, it can be used for techniques where you draw an object and then want to run another fragment shader (or some more draw calls) to alter that object's appearance, by adding reflections, lighting, or screen-space effects. In that case, when you draw the object the first time, it's very cheap to fill the stencil buffer at the same time. Then, your later pass (to add the reflections or whatever) can use the stencil test to only run on those fragments that eventually did get drawn on the screen.
+
+Another common use is when rendering a scene in multiple parts. For example, in a flight simulator, it's common for the cockpit (and aircraft exterior) and the terrain (and other aircraft) to be done in completely separate passes. This lets you use a lower-precision depth buffer without causing z fighting, because you can use different depth ranges for the near content and the far content. But if you do this, you can't reuse the same depth values for both passes. In this case, you can fill the stencil buffer when you're drawing the cockpit, and use the stencil test to avoid overdrawing the cockpit when you draw the terrain. (You need to do more to handle glass effects on the cockpit windows: this description is an oversimplification.) You can use similar techniques for drawing the player's weapon and/or hands in first-person shooters.
+
+The stencil buffer is used in many techniques: too many to list them all individually. But in general, if you want to have some render passes only affect some fragments, and the fragments you want to affect are those corresponding to particular objects or shaders, then the stencil buffer is a cheap way to enable that.
+
+Another use is for filling non-convex polygons, e.g, Concavities and Self intersections
+

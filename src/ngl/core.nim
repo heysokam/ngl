@@ -20,7 +20,7 @@ import ./render    as r
 import ./color
 import ./window    as w
 import ./camera    as cam
-import ./mesh      as mesh
+import ./body      as body
 import ./texture   as tex
 import ./shader    as shd
 import ./tech      as tech
@@ -62,10 +62,10 @@ proc draw (inds :EBO) :void=  gl.drawElements(gl.Tris, inds.csizeof, gl.uInt, ni
   ## Alias for internal readability.
   ## Draws the currently bound VAO, using the given EBO.
 #____________________
-proc draw *(mesh :RenderMesh) :void=
+proc draw *(mesh :RenderMesh; shd :ShaderProg) :void=
   ## Simple draw the given mesh, without any transformation.
   mesh.vao.enable()   # Define what will be rendered (VAO)
-  mesh.shd.enable()   # Enable the shader program of the mesh
+  shd.enable()        # Enable the shader program to render the mesh
   mesh.inds.draw()    # Render it
   mesh.vao.disable()  # Clean OpenGL state for this frame, without deleting the object data
 

@@ -17,13 +17,14 @@ import ../types    as rTypes
 import ./types
 
 #____________________
-proc newRenderPhase *() :RenderPhase=  RenderPhase(name: "EmptyPhase", vert: "", frag: "", shd: newShaderProg())
+proc newRenderPhase *() :RenderPhase=
   ## Creates a new empty render phase
+  RenderPhase(name: "EmptyPhase", shd: newShaderProg())
 #____________________
 proc newRenderPhase *(name, vert, frag :str; init :bool= false) :RenderPhase=
-  ## Creates a new rendering technique with the given data
+  ## Creates a new rendering phase with the given data
   ## Doesn't initialize the shader by default. Can be changed with init = true
-  RenderPhase(name: name, vert: vert, frag: frag, shd: if init: newShaderProg(vert, frag) else: newShaderProg())
+  RenderPhase(name: name, shd: if init: newShaderProg(vert, frag) else: newShaderProg())
 #____________________
 proc init *(phs :var RenderPhase) :void=
   ## Initializes the shader program of the given RenderPhase

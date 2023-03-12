@@ -2,23 +2,15 @@
 #  ngl : Copyright (C) Ivan Mar (sOkam!) : MIT  :
 #:_______________________________________________
 # ndk dependencies
-import nstd/types  as base
-import nstd/format
-import nstd/C
-import nmath/types as m
+import nstd/types as base
 # Module dependencies
-from   ./gl        as gl import nil
-import ./types
-import ./shader
-import ./texture
-import ./material
-import ./color
-import ./C as Cgl
-#____________________
+import ./types/buffer
+import ./gl/types as gl
+
 
 #_______________________________________________________
 # Constructors: Empty
-#______________________________
+#____________________
 proc newGLAttrib () :OpenGLAttrib= 
   new result
   result.name = "Uninitialized Attribute"
@@ -34,22 +26,17 @@ proc newVBO [T](data :seq[T]= @[]) :VBO[T]=
 proc newMeshAttrib (T :typedesc) :MeshAttribute[T]=
   MeshAttribute[T](attr: newGLAttrib(), vbo: newVBO[T]())
 #____________________
-proc newVAO () :VAO=
+proc newVAO *() :VAO=
   new result
   result.pos   = newMeshAttrib(Vec3)
   result.color = newMeshAttrib(Color)
   result.uv    = newMeshAttrib(Vec2)
   result.norm  = newMeshAttrib(Vec3)
 #____________________
-proc newEBO [T](data :seq[T]= @[]) :EBO[T]=
+proc newEBO *[T](data :seq[T]= @[]) :EBO[T]=
   new result
   result.id   = u32.high
   result.data = data
-#____________________
-proc newRenderMesh *() :RenderMesh= 
-  ## Creates a new RenderMesh, with all values set to 0 or empty
-  RenderMesh(vao: newVAO(), inds: newEBO[UVec3](), shd: newShaderProg(), mats: @[])
-#_______________________________________________________
 
 #_______________________________________________________
 # Constructors: General
@@ -78,43 +65,8 @@ proc newVAO (
   result.color = newMeshAttrib(Color, colors, Attr.aColor)
   result.uv    = newMeshAttrib(Vec2,  uvs,    Attr.aUV)
   result.norm  = newMeshAttrib(Vec3,  norms,  Attr.aNorm)
-#____________________
-proc newRenderMesh *(
-    verts    :seq[Vec3];
-    inds     :seq[UVec3];
-    colors   :seq[Color]=  @[];
-    uvs      :seq[Vec2]=   @[];
-    norms    :seq[Vec3]=   @[];
-    shader   :ShaderProg;
-    mats     :Materials=   @[];
-    ) :RenderMesh=
-  ## Creates a new RenderMesh from the given data.
-  ## Vertex positions and indices are mandatory. The other vertex attributes are optional.
-  ## A valid compiled ShaderProg must be provided.
-  ## Materials will be empty if omitted.
-  RenderMesh(
-    vao:  newVAO(verts, colors, uvs, norms),
-    inds: newEBO(inds),
-    shd:  shader,
-    mats: mats  )
-#____________________
-proc newRenderMesh *(
-    verts    :seq[Vec3];
-    inds     :seq[UVec3];
-    colors   :seq[Color]=  @[];
-    uvs      :seq[Vec2]=   @[];
-    norms    :seq[Vec3]=   @[];
-    vertFile :str;
-    fragFile :str;
-    mats     :Materials=   @[];
-    ) :RenderMesh=
-  ## Creates a new RenderMesh from the given data.
-  ## Vertex positions and indices are mandatory. The other vertex attributes are optional.
-  ## Valid paths to vertex and fragment shader code files must be provided.
-  ## Materials will be empty if omitted.
-  newRenderMesh(verts, inds, colors, uvs, norms, newShaderProg(vertFile, fragFile), mats)
 
-#______________________________
+#_______________________________________________________
 # Content Checks
 #____________________
 template hasPos   *(v :VAO) :bool=  v.pos.vbo.data.len   > 0  ## Checks if the target VAO contains a position vbo, by calculating the length of the vbo.data
@@ -123,21 +75,13 @@ template hasUV    *(v :VAO) :bool=  v.uv.vbo.data.len    > 0  ## Checks if the t
 template hasNorm  *(v :VAO) :bool=  v.norm.vbo.data.len  > 0  ## Checks if the target VAO contains a normals  vbo, by calculating the length of the vbo.data
 template hasMats  *(mesh :RenderMesh) :bool=  mesh.mats.len > 0  ## Checks if the given mesh has any materials attached
 
-#__________________________________________________
-# TODO: Better naming system for objects
-proc name *(m :RenderMesh) :str=  m.vao.id.reprb
-#______________________________
-
-#______________________________
+#_______________________________________________________
 # Enable/Disable Buffers
 #______________________________
 proc enable *(attr :OpenGLAttrib) :void=
   ## Enables the target OpenGL attribute metadata for the currently bound VAO
   gl.vertexAttribPointer(attr.id, attr.size.cint, attr.typ, false, 0, nil)
   gl.enableVertexAttribArray(attr.id)
-#______________________________
-proc disable *(attr :OpenGLAttrib) :void=  gl.disableVertexAttribArray(attr.id)
-  ## Disables the target OpenGL attribute metadata
 #______________________________
 proc enable *(trg :VAO|VBO|EBO) :void= 
   ## Binds the selected buffer object
@@ -148,6 +92,9 @@ proc enable *(trg :VAO|VBO|EBO) :void=
   elif trg is EBO: typ = gl.ElementArrayBuffer
   gl.bindBuffer(typ, trg.id)
 #______________________________
+proc disable *(attr :OpenGLAttrib) :void=  gl.disableVertexAttribArray(attr.id)
+  ## Disables the target OpenGL attribute metadata
+#______________________________
 proc disable *(trg :VAO|VBO|EBO) :void= 
   ## Unbinds the selected buffer object type
   ## Does nothing if a buffer of this type is not currently bound
@@ -157,15 +104,8 @@ proc disable *(trg :VAO|VBO|EBO) :void=
   when trg is VBO: typ = gl.ArrayBuffer
   elif trg is EBO: typ = gl.ElementArrayBuffer
   gl.bindBuffer(typ, 0)
-#______________________________
-template cleanState *(mesh :RenderMesh) :void=
-  ## Cleans OpenGL state after managing a Mesh (unbind all buffers)
-  #  Per-Object Attributes are bound to the VAO, and don't need to be disabled
-  mesh.vao.disable
-  mesh.vao.pos.vbo.disable  # Disabling any of the VBOs is enough, since only the last one is saved
-  mesh.inds.disable
 
-#______________________________
+#_______________________________________________________
 # Register Data
 #____________________
 proc register *[T](vao :VAO; ma :var MeshAttribute[T]; id :Attr) :void=
@@ -181,11 +121,9 @@ proc register *[T](vao :VAO; ma :var MeshAttribute[T]; id :Attr) :void=
   gl.enableVertexArrayAttrib(vao.id, ma.attr.id)
   gl.vertexArrayAttribFormat(vao.id, ma.attr.id, ma.attr.size.cint, ma.attr.typ, false, 0)
   gl.vertexArrayAttribBinding(vao.id, ma.attr.id, ma.attr.id)
-
 #______________________________
 proc register (vao :var VAO) :void=  gl.createVertexArrays(1, vao.id.addr)
   ## Creates the given VAO in OpenGL (DSA)
-
 #______________________________
 proc register (vao :VAO; ebo :var EBO) :void=
   ## Create and bind the given EBO to the target VAO in OpenGL (DSA)
@@ -193,35 +131,18 @@ proc register (vao :VAO; ebo :var EBO) :void=
   gl.namedBufferStorage(ebo.id, ebo.csizeof, ebo.caddr, gl.DynamicStorageBit)
   gl.vertexArrayElementBuffer(vao.id, ebo.id)
 
-#______________________________
-proc register *(mesh :var RenderMesh) :void=
-  ## Upload, bind and link all data and information from the given mesh into OpenGL (DSA)
-  if not mesh.vao.hasPos: return  # Stop reading if no vertex, because other data will be irrelevant in that case
-  mesh.vao.register                                                     # Register the VAO itself
-  mesh.vao.register(mesh.inds)                                          # Register the Indices
-  mesh.vao.register(mesh.vao.pos, Attr.aPos)                            # Register the Positions
-  if mesh.vao.hasColor: mesh.vao.register(mesh.vao.color, Attr.aColor)  # Register the Colors
-  if mesh.vao.hasUV:    mesh.vao.register(mesh.vao.uv,    Attr.aUV)     # Register the UVs
-  if mesh.vao.hasNorm:  mesh.vao.register(mesh.vao.norm,  Attr.aNorm)   # Register the Normals
-  mesh.mats.register                                                     # Register the Materials/Textures
-#______________________________
-proc register *(model :var RenderModel) :void=
-  ## Upload, bind and link all data and information 
-  ## from all meshes of a model into OpenGL
-  for mesh in model.mitems: mesh.register
 
 #______________________________
+# Terminate Data
 proc term *(v :VBO|EBO) :void=
   ## Deletes the target buffer from OpenGL memory (DSA)
   discard gl.unmapNamedBuffer(v.id)
   gl.deleteBuffers(1, v.id.addr)
   let t :str= when v is VBO: "VBO" elif v is EBO: "EBO"
   # log &"- {t} deleted"
-
 #______________________________
 template term *[T](ma :MeshAttribute[T]) :void=  ma.vbo.term
   ## Terminates the VBO contained in the target MeshAttribute
-
 #______________________________
 proc term *(v :VAO) :void=
   ## Terminates all data contained in the target VAO and all its contained attributes
@@ -230,16 +151,4 @@ proc term *(v :VAO) :void=
   v.color.term
   v.uv.term
   v.norm.term
-
-#______________________________
-proc term *(m :RenderMesh) :void=
-  ## Terminates all elements of the input mesh object
-  # log &"Terminating object: {m.name}"
-  m.vao.term
-  m.inds.term
-
-#__________________________________________________
-proc term *(obj :RenderBody) :void=
-  ## Terminates all data for all meshes of the target RenderBody
-  for m in obj.mdl: m.term
 

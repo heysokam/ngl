@@ -47,9 +47,11 @@ type VAO * = ref object of OpenGLObj
   color  *:VColor
   uv     *:VUV
   norm   *:VNorm
+
 #____________________
 type EBO *[T]= ref object of OpenGLObj
   data *:seq[T]
 #____________________
 type Indices * = EBO[UVec3]  # TODO: Could probably be part of the VAO too
+
 
