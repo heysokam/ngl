@@ -16,3 +16,5 @@ import ./types/buffer              ; export buffer
 import ./types/body    as rBody    ; export rBody
 import ./types/light   as lgtType  ; export lgtType
 import ./types/glsl    as glslType ; export glslType
+import ./types/tech    as techType ; export techType
+

@@ -2,8 +2,7 @@
 #  ngl  |  Copyright (C) Ivan Mar (sOkam!)  |  MIT  :
 #:___________________________________________________
 # ndk dependencies
-import nstd/types as base
-import nstd/time
+import nstd
 import nmath
 import ngl
 import ngl/gl/tools as gl
@@ -11,19 +10,8 @@ import ngl/gl/tools as gl
 import ./cfg
 import ./todo
 
-
 #__________________________________________________
 # Triangle
-const vert :str= """
-#version 460 core
-layout (location = 0) in vec3 aPos;
-void main() { gl_Position = vec4(aPos, 1.0); }
-"""
-const frag :str= """
-#version 460 core
-out vec4 fColor;
-void main() { fColor = vec4(1.0, 0.5, 0.0, 1.0); }
-"""
 const pos = @[
   vec3(-0.5, -0.5, 0.0), # left  
   vec3( 0.5, -0.5, 0.0), # right 
@@ -43,19 +31,20 @@ proc run=
   # Start
   let name = "Triangle"
   echo "Hello ",name
-  render.init(cfg.cam, cfg.res.x, cfg.res.y, name, cfg.resizable, cfg.vsync, cfg.renderProf)
-  triangle = newRenderMesh(pos,inds, shader = newShaderProgCode(vert, frag))
+  render.init(cfg.cam, cfg.res.x, cfg.res.y, name, cfg.resizable, cfg.vsync)
+  render.tech = Tech.Triangle.new()
+  triangle = newRenderMesh(pos,inds)
   triangle.register()
 
   # Update loop
   while not render.win.exit(): 
-    gl.clear()              # Clear the screen
-    triangle.draw()         # Draw the triangle
-    render.win.update()     # Update screen
+    gl.clear()                     # Clear the screen, using OpenGL alias from ngl/gl/tools
+    triangle.draw(render.tech[0])  # Draw the triangle
+    render.win.update()            # Update screen
+
 
   # Stop
   render.win.term()
-
 #____________________
 when isMainModule: run()
 

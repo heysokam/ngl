@@ -7,7 +7,7 @@ import pkg/chroma
 import nstd/types
 import nmath/types as m
 # Module dependencies
-import ./uniform
+import ./buffer
 
 #____________________
 type LightFlag  *{.pure.}= enum 
@@ -25,28 +25,54 @@ type Light * = object
   ## Variant type for all light styles
   case kind*: LightKind
   of   LightKind.Amb:  discard
-  of   LightKind.Dir:  dirv  *:Vec3
-  of   LightKind.Pt :
-    posv  *:Vec3
-    foff  *:f32
+  of   LightKind.Dir:
+    ddir  *:Vec3
+  of   LightKind.Pt:
+    ppos   *:Vec3
+    pfoff  *:f32
   of   LightKind.Spot:
-    sposv  *:Vec3
-    sdirv  *:Vec3
+    spos   *:Vec3
+    sdir   *:Vec3
     sfoff  *:f32
   flags  *:LightFlags
   power  *:f32
   color  *:Color
-type Lights * = seq[Light]
-
-#______________________________
-## TODO:
-## Should be unified with the Light type
-type LightUniform * = object
-  name   *:str     ## Name of the uniform struct that will contain all other uniforms
   active *:bool    ## Whether the light is active or not
-  power  *:Uniform ## f32
-  color  *:Uniform ## color
-  pos    *:Uniform ## vec3
-  dir    *:Uniform ## vec3
-#______________________________
+  name   *:str
+#____________________
+type Lights * = UBO[Light]
+
+#____________________
+# Field Aliases
+template pos *(l :Light) :Vec3=
+  case  l.kind
+  of    LightKind.Pt:   l.ppos
+  of    LightKind.Spot: l.spos
+  else: vec3(0,0,0)
+template dir *(l :Light) :Vec3=
+  case  l.kind
+  of    LightKind.Dir:  l.ddir
+  of    LightKind.Spot: l.sdir
+  else: vec3(0,0,0)
+template foff *(l :Light) :f32=
+  case  l.kind
+  of    LightKind.Pt:   l.pfoff
+  of    LightKind.Spot: l.sfoff
+  else: 0.0'f32
+#____________________
+template `pos=` *(l :var Light; val :Vec3) :void=
+  case  l.kind
+  of    LightKind.Pt:   l.ppos = val
+  of    LightKind.Spot: l.spos = val
+  else: discard
+template `dir=` *(l :var Light; val :Vec3) :void=
+  case  l.kind
+  of    LightKind.Dir:  l.ddir = val
+  of    LightKind.Spot: l.sdir = val
+  else: discard
+template `foff=` *(l :var Light; val :f32) :void=
+  case  l.kind
+  of    LightKind.Pt:   l.pfoff = val
+  of    LightKind.Spot: l.sfoff = val
+  else: discard
 

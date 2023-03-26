@@ -10,8 +10,17 @@ import nmath/types as m
 # Module dependencies
 import ./base as r
 
+
 #____________________
+# Layout Bindings:  UBOs, SSBOs, etc
+type BindID *{.pure.}= enum Matrix = 0, Camera, Light, None
+  ## Explicit binding IDs for shader Uniforms. All shaders depend on them.
+converter toCInt *(id :BindID) :cint=  id.ord.cint
+converter toU32  *(id :BindID) :u32=   id.ord.u32
+#____________________
+# Layout Locations:  Vertex Attributes
 type Attr *{.pure.}= enum aPos = 0, aColor, aUV, aNorm
+  ## Explicit location IDs for shader attributes. All shaders depend on them.
 converter toCInt *(att :Attr) :cint=  att.ord.cint
 converter toU32  *(att :Attr) :u32=   att.ord.u32
 #____________________
@@ -23,9 +32,13 @@ type OpenGLAttrib * = ref object of OpenGLObj
   typ     *:GLEnum
   stride  *:i32
 #____________________
-type VBO *[T]= ref object of OpenGLObj
-  ## Vertex Buffer Object data and id
+type DBO [T]= ref object of OpenGLObj
   data  *:seq[T]  ## Data buffer that holds the information required for rendering
+type VBO  *[T]= DBO[T]   ## Vertex Buffer Object data and id
+type EBO  *[T]= DBO[T]   ## Elements Buffer Object data and id
+type UBO  *[T]= DBO[T]   ## Uniform Buffer Object data and id
+type SSBO *[T]= DBO[T]   ## Shader Storage Buffer Object data and id
+type BO   *[T]= VBO[T] | EBO[T] | UBO[T] | SSBO[T]
 #____________________
 type MeshAttribute *[T]= object
   ## RenderMesh attribute.
@@ -49,9 +62,28 @@ type VAO * = ref object of OpenGLObj
   norm   *:VNorm
 
 #____________________
-type EBO *[T]= ref object of OpenGLObj
-  data *:seq[T]
-#____________________
 type Indices * = EBO[UVec3]  # TODO: Could probably be part of the VAO too
+
+#_________________________________________________
+# Render Target
+type Target *{.pure.}= enum Color, Depth, Stencil
+type Targets * = set[Target]
+#____________________
+type RenderTarget * = ref object of OpenGLObj
+  kind      *:Target   ## Type of RenderTarget that is stored
+  size      *:Size     ## Size of the Target's texture
+  colors    *:GLEnum  ## Color components of the target  (aka. gl.internalFormat)
+  format    *:GLEnum  ## Format of the Pixel data
+  typ       *:GLEnum  ## Type of the Pixel data
+  attachID  *:uint32   ## Attachment ID of the RenderTarget. Color starts at id 0, and Depth/Stencil use their unique values
+  clearVal  *:Vec4     ## Value to clear the buffer to. Stores single components and/or converted to ints when its relevant
+#____________________
+type RenderTargets * = seq[RenderTarget]
+
+#____________________
+# Framebuffer
+type FBO * = ref object of OpenGLObj
+  cont  *:Targets        ## List of Targets contained in the FBO. For faster content checking
+  trg   *:RenderTargets  ## Targets contained in the Framebuffer
 
 

@@ -8,6 +8,7 @@ import nmath/types as m
 #____________________
 ## Camera
 type Camera * = object
+  # TODO: Change pos/rot/up to trf.
   pos   *:Vec3  ## Position / Origin point of the camera
   rot   *:Vec3  ## X/Y/Z angles of rotation (yaw, pitch, roll)
   up    *:Vec3  ## Up direction for the camera (in world space)

@@ -94,3 +94,6 @@ proc term *(obj :RenderBody) :void=
   ## Terminates all data for all meshes of the target RenderBody
   for m in obj.mdl: m.term
 
+#__________________________________________________
+template world *(body :RenderBody) :Mat4=  body.trf.mat4
+

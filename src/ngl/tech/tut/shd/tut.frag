@@ -21,7 +21,7 @@ in vec2 vUV;
 // Passed from the application to the shader.
 // Can be used in both vertex and fragment shaders
 //______________________________
-uniform mat4 uMVP;
+uniform mat4 uWVP;
 uniform vec4 uColor;
 uniform sampler2D uDif;
 

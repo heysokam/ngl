@@ -24,7 +24,7 @@ type RenderBody *[T]= object
   ## Includes spatial data, such as position, rotation, scale
   ## Will use the configured Physics Type for its Transform
   mdl  *:RenderModel  ## Body Geometry data
-  trf  *:Transform[T] ## Body 3D transformation data
+  trf  *:Transform[T] ## Body 3D World Transformation Matrix
 #____________________
 type RenderBodies * = seq[RenderBody]
 

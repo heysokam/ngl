@@ -48,7 +48,7 @@ in vec3 vNorm;   // Vertex normal
 // Passed from the application to the shader.
 // Can be used in both vertex and fragment shaders
 //______________________________
-uniform mat4 uMVP;    // Transformation matrix
+uniform mat4 uWVP;    // Transformation matrix
 uniform vec4 uColor;  // Tut: Incoming Constant Color  TODO: Probably remove
 uniform vec3 uCamPos; // Camera position in world space
 //______________________________

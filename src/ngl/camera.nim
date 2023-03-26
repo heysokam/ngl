@@ -21,6 +21,17 @@ proc newCamera *(origin, target, up :Vec3; fov, near, far :f32) :Camera=
   result.fov  = fov
   result.near = near
   result.far  = far 
+
+#____________________
+proc view *(cam :Camera) :Mat4=
+  # TODO: Should be :  result = cam.trf.mat4   instead
+  let rotation :Mat4=  cam.rot.yaw.rotateY * cam.rot.pitch.rotateX
+  result = cam.pos.translate * rotation
+#____________________
+# Perspective Projection Matrix                       fov Y    aspect ratio  near  far
+proc proj *(cam :Camera; ratio :f32) :Mat4=  perspective(cam.fov, ratio, cam.near, cam.far)
+
+
 #____________________
 template init *(origin, target, up :Vec3; fov, near, far :f32) :Camera=  newCamera(origin, target, up, fov, near, far)
 template dir  *(cam :Camera) :Vec3= cam.pos.target

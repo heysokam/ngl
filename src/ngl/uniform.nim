@@ -29,7 +29,7 @@ proc newUniform *(t :UniformData; name :str= "EmptyUniform"; ina :bool= true) :U
 
 #______________________________
 proc enable *(u :Uniform; data :UniformData) :void=
-  ## Uploads the given data to the Uniform.data to OpenGL
+  ## Uploads the given data to the given Uniform connection slot in OpenGL
   ## Requires that the uniform.id has been initialized
   if u.ina: return
   if u.kind == Kind.none: return

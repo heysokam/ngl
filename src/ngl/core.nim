@@ -18,6 +18,7 @@ import ./types
 # import ./logger
 import ./render    as r
 import ./color
+import ./buffer
 import ./window    as w
 import ./camera    as cam
 import ./body      as body
@@ -32,8 +33,8 @@ import ./C
 #__________________________________________________
 # Renderer: Initialize
 #____________________
-proc init *(render :var Renderer; camera :Camera; 
-            width, height :u32; title :str; resizable, vsync :bool; prof :RenderProfile= glFour,
+proc init *(render :var Renderer; camera :Camera;
+            width, height :u32; title :str; resizable, vsync :bool; prof :RenderProfile= glFour;
             key :glfw.KeyFun= nil; mousePos :glfw.CursorPosFun= nil; mouseBtn :glfw.MouseButtonFun= nil; mouseScroll :glfw.ScrollFun= nil;
             log :LogFunc= logger.log;
             ) :void=
@@ -42,8 +43,9 @@ proc init *(render :var Renderer; camera :Camera;
   log "Initializing: Renderer"
   render   = newRenderer(prof)
   # Initialize the camera
-  render.cam = camera
-  render.win = w.init(width, height, title, resizable, vsync, prof, key, mousePos, mouseBtn, mouseScroll)
+  render.cam  = camera
+  render.win  = w.init(width, height, title, resizable, vsync, prof, key, mousePos, mouseBtn, mouseScroll)
+  render.tech = newSeqOfCap[RenderTech](1)
   gl.init()  # Load OpenGL context
   w.resize(render.win.ct, width.i32, height.i32)  # Set the initial viewport position and size
 
@@ -58,34 +60,38 @@ proc init *(render :var Renderer; camera :Camera;
 #__________________________________________________
 # Renderer: Draw
 #____________________
-proc draw (inds :EBO) :void=  gl.drawElements(gl.Tris, inds.csizeof, gl.uInt, nil)
-  ## Alias for internal readability.
-  ## Draws the currently bound VAO, using the given EBO.
-#____________________
-proc draw *(mesh :RenderMesh; shd :ShaderProg) :void=
+proc draw *(r :Renderer; mesh :RenderMesh; tech :RenderTech) :void=
   ## Simple draw the given mesh, without any transformation.
-  mesh.vao.enable()   # Define what will be rendered (VAO)
-  shd.enable()        # Enable the shader program to render the mesh
-  mesh.inds.draw()    # Render it
-  mesh.vao.disable()  # Clean OpenGL state for this frame, without deleting the object data
+  mesh.vao.enable()       # Define what will be rendered (VAO)
+  for phs in tech.phase:  # For every phase in the given Technique
+    r.apply(phs, mesh)    # Render the mesh
+  mesh.vao.disable()      # Clean OpenGL state for the mesh, without deleting the object data from GPU.
 
 
+proc draw (r :Renderer; mesh :RenderMesh; tech :var RenderTech; view, proj :var Mat4) :void=
+  discard
 
+#____________________
+proc draw *(r :Renderer; body :RenderBody; tech :var RenderTech; view, proj :var Mat4) :void=
+  ## Draws every mesh of the given body with the given Renderer, using the corresponding RenderTech
+  if body.mdl.len == 0: return  # Allow passing empty bodies. Just skip drawing them.
+  # Draw every mesh of the body
+  for mesh in body.mdl: r.draw(mesh, tech, body.world, view, proj)
 
 
 ##[
 #__________________________________________________
 # TODO: Fix mess, old temp behavior
 #____________________
-proc draw (r :Renderer; mesh :RenderMesh; tech :var RenderTech; mvp, model, view, proj :var Mat4) :void=
+proc draw (r :Renderer; mesh :RenderMesh; tech :var RenderTech; view, proj :var Mat4) :void=
   # Define how data will be rendered (Technique: program and uniforms)
-  let phase :u8= 0
+  let phase = 0
   tech.enable(phase)
 
   #_________________________
   # Uniforms
-  let uMVP   = tech.get("uMVP",     phase)
-  gl.uniformMatrix4fv(uMVP, 1, false, mvp.caddr)  # transpose: false = Column major matrix   : OpenGL matrices are ColumnMajor
+  let uWVP   = tech.get("uWVP",     phase)
+  gl.uniformMatrix4fv(uWVP, 1, false, WVP.caddr)  # transpose: false = Column major matrix   : OpenGL matrices are ColumnMajor
 
   # Create the color uniform effect  TODO: Remove
   var color = color(0.3, 1, 0.3, 1)
@@ -135,12 +141,6 @@ proc draw (r :Renderer; mesh :RenderMesh; tech :var RenderTech; mvp, model, view
   mesh.vao.disable()
   mesh.tex.disable()
 
-#____________________
-proc draw *(r :Renderer; body :RenderBody; tech :var RenderTech; mvp, model, view, proj :var Mat4) :void=
-  ## Draws every mesh of the given body with the given Renderer, using the corresponding RenderTech
-  if body.mdl.len == 0: return  # Allow passing empty bodies. Just skip drawing them.
-  # Draw every mesh of the body
-  for mesh in body.mdl: r.draw(mesh, tech, mvp, model, view, proj)
 ]##
 
 

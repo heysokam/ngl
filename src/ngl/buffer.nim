@@ -1,17 +1,21 @@
 #:_______________________________________________
 #  ngl : Copyright (C) Ivan Mar (sOkam!) : MIT  :
 #:_______________________________________________
+# External dependencies
+import pkg/chroma
 # ndk dependencies
-import nstd/types as base
+import nstd/types  as base
+import nmath/types as m
 # Module dependencies
+import ./types/body
 import ./types/buffer
-import ./gl/types as gl
+from   ./gl as gl import nil
 
 
 #_______________________________________________________
 # Constructors: Empty
 #____________________
-proc newGLAttrib () :OpenGLAttrib= 
+proc newGLAttrib () :OpenGLAttrib=
   new result
   result.name = "Uninitialized Attribute"
   result.id   = u32.high
@@ -54,7 +58,7 @@ proc newGLAttrib *[T](name :str; id :u32; typ :typedesc[T]) :OpenGLAttrib=
 proc newMeshAttrib [T](t :typedesc; data: seq[T]; attr :Attr) :MeshAttribute[T]=
   MeshAttribute[T](attr: newGLAttrib($attr, attr, t), vbo: newVBO(data))
 #____________________
-proc newVAO (
+proc newVAO *(
     verts   :seq[Vec3];
     colors  :seq[Color]=  @[]; 
     uvs     :seq[Vec2]=   @[]; 
@@ -74,35 +78,34 @@ template hasColor *(v :VAO) :bool=  v.color.vbo.data.len > 0  ## Checks if the t
 template hasUV    *(v :VAO) :bool=  v.uv.vbo.data.len    > 0  ## Checks if the target VAO contains a UVs      vbo, by calculating the length of the vbo.data
 template hasNorm  *(v :VAO) :bool=  v.norm.vbo.data.len  > 0  ## Checks if the target VAO contains a normals  vbo, by calculating the length of the vbo.data
 template hasMats  *(mesh :RenderMesh) :bool=  mesh.mats.len > 0  ## Checks if the given mesh has any materials attached
+#____________________
+proc getType (trg :VAO|BO) :gl.Enum=
+  ## Returns the gl.Enum type of the given BufferObject, based on its native type.
+  when trg is  VAO: return # Compiler wants to access this, even if it shouldn't. This will never be reached, only for linting.
+  when trg is  VBO: result = gl.Array
+  elif trg is  EBO: result = gl.ElementArray
+  elif trg is  UBO: result = gl.Uniform
+  elif trg is SSBO: result = gl.ShaderStorage
 
 #_______________________________________________________
 # Enable/Disable Buffers
 #______________________________
-proc enable *(attr :OpenGLAttrib) :void=
-  ## Enables the target OpenGL attribute metadata for the currently bound VAO
-  gl.vertexAttribPointer(attr.id, attr.size.cint, attr.typ, false, 0, nil)
-  gl.enableVertexAttribArray(attr.id)
+proc enable *(trg :VAO|BO; id :BindID= BindID.None) :void= 
+  ## Binds the selected buffer object.
+  ## xBO buffers only need binding for changing their format.
+  ## VBO|EBO don't need to be enabled, use the VAO instead, or their handle to modify them.
+  ## `id` is only used for UBO|SSBO.
+  when trg is VAO:      gl.bindVertexArray(trg.id); return
+  var  typ :gl.Enum=    trg.getType()
+  when trg is VBO|EBO:  gl.bindBuffer(typ, trg.id)
+  elif trg is UBO|SSBO: gl.bindBufferRange(typ, id, trg.id, 0, trg.data.csizeof)
 #______________________________
-proc enable *(trg :VAO|VBO|EBO) :void= 
-  ## Binds the selected buffer object
-  ## VBO and EBO buffers only need binding for creating or changing their format
-  when trg is VAO: gl.bindVertexArray(trg.id); return
-  var typ :gl.Enum
-  when trg is VBO: typ = gl.ArrayBuffer
-  elif trg is EBO: typ = gl.ElementArrayBuffer
-  gl.bindBuffer(typ, trg.id)
-#______________________________
-proc disable *(attr :OpenGLAttrib) :void=  gl.disableVertexAttribArray(attr.id)
-  ## Disables the target OpenGL attribute metadata
-#______________________________
-proc disable *(trg :VAO|VBO|EBO) :void= 
+proc disable *(trg :VAO|BO) :void= 
   ## Unbinds the selected buffer object type
   ## Does nothing if a buffer of this type is not currently bound
   # Binding to 0 is the same as unbinding
   when trg is VAO: gl.bindVertexArray(0); return
-  var typ :gl.Enum
-  when trg is VBO: typ = gl.ArrayBuffer
-  elif trg is EBO: typ = gl.ElementArrayBuffer
+  var typ :gl.Enum= trg.getType()
   gl.bindBuffer(typ, 0)
 
 #_______________________________________________________
@@ -122,23 +125,46 @@ proc register *[T](vao :VAO; ma :var MeshAttribute[T]; id :Attr) :void=
   gl.vertexArrayAttribFormat(vao.id, ma.attr.id, ma.attr.size.cint, ma.attr.typ, false, 0)
   gl.vertexArrayAttribBinding(vao.id, ma.attr.id, ma.attr.id)
 #______________________________
-proc register (vao :var VAO) :void=  gl.createVertexArrays(1, vao.id.addr)
+proc register *(vao :var VAO) :void=  gl.createVertexArrays(1, vao.id.addr)
   ## Creates the given VAO in OpenGL (DSA)
 #______________________________
-proc register (vao :VAO; ebo :var EBO) :void=
+proc register *(vao :VAO; ebo :var EBO) :void=
   ## Create and bind the given EBO to the target VAO in OpenGL (DSA)
   gl.createBuffers(1, ebo.id.addr)
   gl.namedBufferStorage(ebo.id, ebo.csizeof, ebo.caddr, gl.DynamicStorageBit)
   gl.vertexArrayElementBuffer(vao.id, ebo.id)
+#______________________________
+proc register *(ubo :var UBO; bindId :BindID) :void=
+  ## Create and bind the given UBO to OpenGL (DSA)
+  gl.createBuffers(1, ubo.id.addr)
+  gl.namedBufferStorage(ubo.id, ubo.csizeof, ubo.caddr, gl.DynamicStorageBit)
+
+#______________________________
+proc modify *[T](bo :var BO[T]; data :T) :void=
+  ## Changes the BufferObject's data storage in OpenGL.
+  var tmp :T= cast[T](gl.mapNamedBuffer(bo.id, gl.Write))
+  bo.data = data
+  tmp     = bo.data
+  discard gl.unmapNamedBuffer(bo.id)
+#______________________________
+# proc glNamedBufferSubData(buffer: GLuint; offset: GLintptr; size: GLsizeiptr; data: pointer)
+proc modifySection *[T](bo :var BO[T]; data :T; offs :u32= 0) :void=
+  ## Changes a subset of the BufferObject's data storage in OpenGL.
+  ## Offset will be 0 (start of the buffer) when omitted.
+  ## NOTE: Better to use modify, which uses Map and Unmap.
+  gl.namedBufferSubData(bo.id, offs, data.csizeof, data.caddr)
 
 
 #______________________________
 # Terminate Data
-proc term *(v :VBO|EBO) :void=
+proc term *(v :BO) :void=
   ## Deletes the target buffer from OpenGL memory (DSA)
-  discard gl.unmapNamedBuffer(v.id)
   gl.deleteBuffers(1, v.id.addr)
-  let t :str= when v is VBO: "VBO" elif v is EBO: "EBO"
+  let t :str= 
+    when v is  VBO: "VBO" 
+    elif v is  EBO: "EBO"
+    elif v is  UBO: "UBO"
+    elif v is SSBO: "SSBO"
   # log &"- {t} deleted"
 #______________________________
 template term *[T](ma :MeshAttribute[T]) :void=  ma.vbo.term

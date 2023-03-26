@@ -24,7 +24,7 @@ float zdot(vec3 a, vec3 b)  { return max(dot(a,b), 0.0); }       // Returns a do
 float nzdot(vec3 a, vec3 b) { return max(dot(a,b), 0.00001); }   // Returns a dot b, clamped to a mimimum of 0.00001 to avoid div by 0
 float sqr(float number)     { return number*number; }            // Returns the number squared
 float area(float radius)    { return 4.0*PI*sqr(radius); }       // Returns the area of the sphere represented by the given radius
-                                                                 //
+
 //________________________________________________
 // Fragment shader outputs
 //______________________________
@@ -57,7 +57,7 @@ uniform vec4  ambColor;    // description="Ambient Light Color" defaultval="0.1,
 // Passed from the application to the shader.
 // Can be used in both vertex and fragment shaders
 //______________________________
-uniform mat4 uMVP;    // Transformation matrix
+uniform mat4 uWVP;    // Transformation matrix
 uniform vec4 uColor;  // Tut: Incoming Constant Color  TODO: Probably remove
 //______________________________
 uniform Light uLightAmb;

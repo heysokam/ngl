@@ -28,7 +28,7 @@ out vec3 vNorm;   // Vertex normal
 // Passed from the application to the shader.
 // Can be used in both vertex and fragment shaders
 //______________________________
-uniform mat4  uMVP;    // Transformation matrix
+uniform mat4  uWVP;    // Transformation matrix
 uniform vec4  uColor;  // Tut: Incoming Constant Color  TODO: Probably remove
 
 // Entry point
@@ -41,6 +41,6 @@ void main() {
   vColor = aColor;  // Send attribute vertex color    to the fragment shader
   vUV    = aUV;     // Send attribute UV coordinates  to the fragment shader
   vNorm  = aNorm;   // Send attribute Surf Normal v3  to the fragment shader
-  gl_Position = uMVP * vec4(aPos, 1.0);
+  gl_Position = uWVP * vec4(aPos, 1.0);
 }
 

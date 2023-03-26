@@ -7,8 +7,8 @@ import std/strutils
 import nstd/types as base
 import nstd/C
 # Module dependencies
-from   ./gl       as gl import nil
-import ./types
+import ./types/shader
+from   ./gl as gl import nil
 #__________________________________________________
 
 
@@ -94,7 +94,7 @@ proc newShaderProg *(vert :ShaderVert; frag :ShaderFrag) :ShaderProg=
   gl.attachShader(result.id, frag.id)
   gl.linkProgram(result.id)
   result.chk()
-  # Delete shaders. Linked to the program, and not needed anymore
+  # Delete shaders. Linked to the program, not needed anymore
   gl.deleteShader(vert.id)
   gl.deleteShader(frag.id)
 #__________________________________________________
@@ -112,14 +112,13 @@ proc newShaderProg *(vertFile, fragFile :str) :ShaderProg=
   var frag = fragFile.newShaderFrag
   result   = newShaderProg(vert, frag)
 #__________________________________________________
-proc term *(prog :ShaderProg) :void=  gl.deleteProgram(prog.id)
-  ## Deletes the target program from OpenGL
-#__________________________________________________
 proc get *(shd :ShaderProg; uName :str) :cint=
   ## Gets the location number for the given uniform name
   # TODO: Use binding instead of location
   result = gl.getUniformLocation(shd.id, uName)
   # if result == -1: log &"ERR : Couldn't get the location of uniform {uName}\tat shader.id = {shd.id}"
 #__________________________________________________
-proc enable *(prog :ShaderProg) :void=  gl.useProgram(prog.id)
+proc enable  *(prog :ShaderProg) :void=  gl.useProgram(prog.id)     ## Marks the shader program for use in OpenGL.
+proc disable *(prog :ShaderProg) :void=  gl.useProgram(0)           ## Clears any currently bound Program.
+proc term    *(prog :ShaderProg) :void=  gl.deleteProgram(prog.id)  ## Deletes the target program from OpenGL.
 

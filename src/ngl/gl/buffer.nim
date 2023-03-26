@@ -4,49 +4,57 @@
 # External dependencies
 import pkg/opengl
 
+#______________________________
+# Contains only DSA functions |
+#______________________________
+
 #____________________
-# DSA: General
-const createBuffers               * = glCreateBuffers
-const namedBufferStorage          * = glNamedBufferStorage
+# General
 const DynamicStorageBit           * = GL_DYNAMIC_STORAGE_BIT
-const unmapNamedBuffer            * = glUnmapNamedBuffer
-const deleteBuffers               * = glDeleteBuffers
+const StaticDraw                  * = GL_STATIC_DRAW
 #____________________
-# DSA: VAO
+# VAO
 const createVertexArrays          * = glCreateVertexArrays
 const deleteVertexArrays          * = glDeleteVertexArrays
+var   bindVertexArray             * = glBindVertexArray
+const Tris                        * = GL_TRIANGLES
 #____________________
-# DSA: VBO
+# xBO
+const bindBuffer                  * = glBindBuffer           ## Bind a named buffer object.
+const createBuffers               * = glCreateBuffers        ## Create named Buffer Objects, by specifying the number of buffer objects to create and an array of names.
+const deleteBuffers               * = glDeleteBuffers        ## Delete named buffer objects, by specifying the number of buffer objects to delete and an array of names.
+const namedBufferStorage          * = glNamedBufferStorage   ## Creates and initializes a buffer object's immutable data store. Only the data properties are immutable, not the data itself.
+const namedBufferSubdata          * = glNamedBufferSubData   ## Updates a subset of a buffer object's data store
+const mapNamedBuffer              * = glMapNamedBuffer       ## Map all of a buffer object's data store into the client's address space
+const mapNamedBufferRange         * = glMapNamedBufferRange  ## Map all or part of a buffer object's data store into the client's address space
+const unmapNamedBuffer            * = glUnmapNamedBuffer     ## Release the mapping of a buffer object's data stored in the client's address space
+const Read                        * = GL_READ_ONLY
+const Write                       * = GL_WRITE_ONLY
+const ReadWrite                   * = GL_READ_WRITE
+#____________________
+# VBO
+const Array                       * = GL_ARRAY_BUFFER
 const vertexArrayVertexBuffer     * = glVertexArrayVertexBuffer
 #____________________
-# DSA: EBO
+# EBO
+const ElementArray                * = GL_ELEMENT_ARRAY_BUFFER
 const vertexArrayElementBuffer    * = glVertexArrayElementBuffer
 const drawElements                * = glDrawElements
 #____________________
-# DSA: Attributes
+# Attributes
 const enableVertexArrayAttrib     * = glEnableVertexArrayAttrib
 const vertexArrayAttribFormat     * = glVertexArrayAttribFormat
 const vertexArrayAttribBinding    * = glVertexArrayAttribBinding
+const disableVertexArrayAttrib    * = glDisableVertexArrayAttrib
+#____________________
+# UBO
+const Uniform                     * = GL_UNIFORM_BUFFER
+const uniformBlockBinding         * = glUniformBlockBinding  ## Assign a binding point to an active uniform block
+const bindBufferRange             * = glBindBufferRange      ## Bind a range within a buffer object to an indexed buffer target
 
 #____________________
-# TODO: Organize -> global and non-dsa
-#____________________
-# VAO
-const genVertexArrays             * = glGenVertexArrays
-var   bindVertexArray             * = glBindVertexArray
-var   drawArrays                  * = glDrawArrays
-const Tris                        * = GL_TRIANGLES
-# VBO
-const genBuffers                  * = glGenBuffers
-const bindBuffer                  * = glBindBuffer
-const bufferData                  * = glBufferData
-const ArrayBuffer                 * = GL_ARRAY_BUFFER
-const ElementArrayBuffer          * = GL_ELEMENT_ARRAY_BUFFER
-const StaticDraw                  * = GL_STATIC_DRAW
-# Attributes
-const vertexAttribPointer         * = glVertexAttribPointer
-var   enableVertexAttribArray     * = glEnableVertexAttribArray
-const disableVertexAttribArray    * = glDisableVertexAttribArray
+# SSBO
+const ShaderStorage               * = GL_SHADER_STORAGE_BUFFER
 
 #____________________
 # FBO
@@ -55,6 +63,9 @@ const namedFramebufferTexture     * = glNamedFramebufferTexture      ## Attach a
 const namedFramebufferDrawBuffer  * = glNamedFramebufferDrawBuffer   ## Specify a color buffer for the Framebuffer. All others will be set to GL_NONE
 const namedFramebufferDrawBuffers * = glNamedFramebufferDrawBuffers  ## Specify multiple color buffers for the Framebuffer. ALl others will be set to GL_NONE
 const checkNamedFramebufferStatus * = glCheckNamedFramebufferStatus  ## Checks the given framebuffer for completeness. Returns gl.Complete on success, or an error code otherwise.
+# FBO: Read/Write
+const namedFramebufferReadBuffer  * = glNamedFramebufferReadBuffer
+const blitNamedFramebuffer        * = glBlitNamedFramebuffer
 # FBO: Explicit clear
 const clearNamedFramebufferfv     * = glClearNamedFramebufferfv   ## For clearing the Color and Depth attachments
 const clearNamedFramebufferiv     * = glClearNamedFramebufferiv   ## For clearing the Stencil attachment
@@ -79,7 +90,8 @@ const Unsupported                 * = GL_FRAMEBUFFER_UNSUPPORTED
 const IncompleteMultisample       * = GL_FRAMEBUFFER_INCOMPLETE_MULTISAMPLE
 const IncompleteLayerTargets      * = GL_FRAMEBUFFER_INCOMPLETE_LAYER_TARGETS
 
-proc getErr *(code :Enum) :string=
+
+proc getErr *(code :GLEnum) :string=
   ## Returns a string containing the reason for the given FBO Incompleteness code.
   case code
   of GLEnum(0):                   result = """
@@ -112,6 +124,7 @@ proc getErr *(code :Enum) :string=
   of IncompleteLayerTargets:      result = """
     One or more framebuffer attachment is layered, and one or more of the populated framebuffer attachments are not layered, 
     or all populated color attachments are not from textures of the same target."""
+  else: result = "Error code not mapped"
 
 
 ##[
@@ -123,14 +136,14 @@ proc glNamedFramebufferRenderbuffer(framebuffer: GLuint; attachment: GLenum; ren
 proc glNamedFramebufferParameteri(framebuffer: GLuint; pname: GLenum; param: GLint)
 # proc glNamedFramebufferDrawBuffer(framebuffer: GLuint; mode: GLenum)
 # proc glNamedFramebufferDrawBuffers(framebuffer: GLuint; n: GLsizei; bufs: ptr GLenum)
-proc glNamedFramebufferReadBuffer(framebuffer: GLuint; mode: GLenum)
+# proc glNamedFramebufferReadBuffer(framebuffer: GLuint; mode: GLenum)
 # FBO: Explicit clear
 # proc glClearNamedFramebufferiv(framebuffer: GLuint; buffer: GLenum; drawbuffer: GLint; value: ptr GLint)
 # proc glClearNamedFramebufferuiv(framebuffer: GLuint; buffer: GLenum; drawbuffer: GLint; value: ptr GLuint)
 # proc glClearNamedFramebufferfv(framebuffer: GLuint; buffer: GLenum; drawbuffer: GLint; value: ptr cfloat)
 # proc glClearNamedFramebufferfi(framebuffer: GLuint; buffer: GLenum; drawbuffer: GLint; depth: cfloat; stencil: GLint)
 
-proc glBlitNamedFramebuffer(readFramebuffer: GLuint; drawFramebuffer: GLuint; srcX0: GLint; srcY0: GLint; srcX1: GLint; srcY1: GLint; dstX0: GLint; dstY0: GLint; dstX1: GLint; dstY1: GLint; mask: GLbitfield; filter: GLenum)
+# proc glBlitNamedFramebuffer(readFramebuffer: GLuint; drawFramebuffer: GLuint; srcX0: GLint; srcY0: GLint; srcX1: GLint; srcY1: GLint; dstX0: GLint; dstY0: GLint; dstX1: GLint; dstY1: GLint; mask: GLbitfield; filter: GLenum)
   ## Copies a block of pixels from one DSA framebuffer object to another
 
 # FBO: DSA info
@@ -172,6 +185,16 @@ proc glCreateRenderbuffers(n: GLsizei; renderbuffers: ptr GLuint)
 proc glNamedRenderbufferStorage(renderbuffer: GLuint; internalformat: GLenum; width: GLsizei; height: GLsizei)
 proc glNamedRenderbufferStorageMultisample(renderbuffer: GLuint; samples: GLsizei; internalformat: GLenum; width: GLsizei; height: GLsizei)
 proc glGetNamedRenderbufferParameteriv(renderbuffer: GLuint; pname: GLenum; params: ptr GLint)
+]##
 
-
+##[
+# Buffer object functions 
+proc glCopyNamedBufferSubData(readBuffer: GLuint; writeBuffer: GLuint; readOffset: GLintptr; writeOffset: GLintptr; size: GLsizeiptr)
+proc glClearNamedBufferData(buffer: GLuint; internalformat: GLenum; format: GLenum; `type`: GLenum; data: pointer)
+proc glClearNamedBufferSubData(buffer: GLuint; internalformat: GLenum; offset: GLintptr; size: GLsizeiptr; format: GLenum; `type`: GLenum; data: pointer)
+proc glFlushMappedNamedBufferRange(buffer: GLuint; offset: GLintptr; length: GLsizeiptr)
+proc glGetNamedBufferParameteriv(buffer: GLuint; pname: GLenum; params: ptr GLint)
+proc glGetNamedBufferParameteri64v(buffer: GLuint; pname: GLenum; params: ptr GLint64)
+proc glGetNamedBufferPointerv(buffer: GLuint; pname: GLenum; params: ptr pointer)
+proc glGetNamedBufferSubData(buffer: GLuint; offset: GLintptr; size: GLsizeiptr; data: pointer)
 ]##

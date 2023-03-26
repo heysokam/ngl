@@ -12,13 +12,13 @@ import ./cfg
 
 #__________________________________________________
 # State
-var render    :Renderer
+var render :Renderer
 
 #__________________________________________________
 proc run=
   let name = "Clear Screen"
   echo "Hello ",name
-  render.init(cfg.cam, cfg.res.x, cfg.res.y, name, cfg.resizable, cfg.vsync, cfg.renderProf)
+  render.init(cfg.cam, cfg.res.x, cfg.res.y, name, cfg.resizable, cfg.vsync)
   while not render.win.exit(): 
     gl.clear()          # Clear the screen, using OpenGL alias from ngl/gl/tools
     render.win.update()

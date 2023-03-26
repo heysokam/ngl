@@ -1,3 +1,6 @@
+#:_______________________________________________
+#  ngl : Copyright (C) Ivan Mar (sOkam!) : MIT  :
+#:_______________________________________________
 # std dependencies
 import std/os
 import std/strutils

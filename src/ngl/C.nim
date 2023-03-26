@@ -8,8 +8,8 @@ import ./types/buffer
 
 #__________________________________________________
 # C interfacing
-# Conversion to ctypes from native engine data types
+# Conversion to ctypes from our native data types
 #____________________
-template caddr   *(v :VBO|EBO) :pointer=  v.data[0].addr
-template csizeof *(v :VBO|EBO) :cint=     (v.data[0].sizeof * v.data.len).cint
-#____________________
+template caddr   *(v :BO) :pointer=  v.data[0].addr
+template csizeof *(v :BO) :cint=     (v.data[0].sizeof * v.data.len).cint
+

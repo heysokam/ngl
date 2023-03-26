@@ -10,7 +10,6 @@ const maxDelta   *:Duration=  initDuration(milliseconds = 1000 div 4)
 #____________________
 # Rendering
 const res         * = uvec2(1366, 768)  ## Default window resolution the engine will launch with
-const renderProf  * = glFour            ## OpenGL Rendering profile that will be loaded. Must be latest. Compat support is not planned.
 const coordSystem * = OpenGLCoords      ## Right handed, -Z down, +Y forw, -X left
 const resizable   * = false             ## Whether the engine's window is resizable by default or not
 const vsync       * = false             ## Whether to have vsync active by default or not
