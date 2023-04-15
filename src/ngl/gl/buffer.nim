@@ -58,6 +58,7 @@ const ShaderStorage               * = GL_SHADER_STORAGE_BUFFER
 
 #____________________
 # FBO
+var   bindFramebuffer             * = glBindFramebuffer              ## Binds the framebuffer object to the specified target. Target must be either gl.Framebuffer, gl.FramebufferDraw or gl.FramebufferRead.
 const createFramebuffers          * = glCreateFramebuffers
 const namedFramebufferTexture     * = glNamedFramebufferTexture      ## Attach a level of a texture object as a logical buffer of a framebuffer object
 const namedFramebufferDrawBuffer  * = glNamedFramebufferDrawBuffer   ## Specify a color buffer for the Framebuffer. All others will be set to GL_NONE
@@ -65,20 +66,31 @@ const namedFramebufferDrawBuffers * = glNamedFramebufferDrawBuffers  ## Specify 
 const checkNamedFramebufferStatus * = glCheckNamedFramebufferStatus  ## Checks the given framebuffer for completeness. Returns gl.Complete on success, or an error code otherwise.
 # FBO: Read/Write
 const namedFramebufferReadBuffer  * = glNamedFramebufferReadBuffer
-const blitNamedFramebuffer        * = glBlitNamedFramebuffer
+proc blitNamedFramebuffer *(read, draw, srcX0, srcY0, srcX1, srcY1, dstX0, dstY0, dstX1, dstY1 :SomeUnsignedInt; mask :GLbitfield; filter :GLint) :void=
+  glBlitNamedFramebuffer(GLuint read, GLuint draw,
+    GLint srcX0, GLint srcY0, GLint srcX1, GLint srcY1, 
+    GLint dstX0, GLint dstY0, GLint dstX1, GLint dstY1, 
+    mask, GLenum filter  )
 # FBO: Explicit clear
 const clearNamedFramebufferfv     * = glClearNamedFramebufferfv   ## For clearing the Color and Depth attachments
 const clearNamedFramebufferiv     * = glClearNamedFramebufferiv   ## For clearing the Stencil attachment
 const clearNamedFramebufferuiv    * = glClearNamedFramebufferuiv  ## For Color attachments that use uint instead of float
 const clearNamedFramebufferfi     * = glClearNamedFramebufferfi   ## For clearing the Depth and Stencil buffers simultaneously.
 # FBO: Identifiers
+const Framebuffer                 * = GL_FRAMEBUFFER
+const FramebufferDraw             * = GL_DRAW_FRAMEBUFFER
+const FramebufferRead             * = GL_READ_FRAMEBUFFER
 const Color                       * = GL_COLOR
-const Depth                       * = GL_DEPTH
-const Stencil                     * = GL_STENCIL
-const DepthStencil                * = GL_DEPTH_STENCIL
+const ColorBit                    * = GL_COLOR_BUFFER_BIT
 const Color0                      * = GL_COLOR_ATTACHMENT0
+const Depth                       * = GL_DEPTH
+const DepthBit                    * = GL_DEPTH_BUFFER_BIT
 const DepthAttachment             * = GL_DEPTH_ATTACHMENT
+const DepthComponent24            * = GL_DEPTH_COMPONENT24   ## internalformat
+const DepthComponent32f           * = GL_DEPTH_COMPONENT32F  ## internalformat
+const Stencil                     * = GL_STENCIL
 const StencilAttachment           * = GL_STENCIL_ATTACHMENT
+const DepthStencil                * = GL_DEPTH_STENCIL
 # FBO: Validation
 const Complete                    * = GL_FRAMEBUFFER_COMPLETE
 const Undefined                   * = GL_FRAMEBUFFER_UNDEFINED
@@ -172,7 +184,7 @@ proc glGetFramebufferAttachmentParameteriv(target: GLenum, attachment: GLenum, p
 proc glGenFramebuffers(n: GLsizei, framebuffers: ptr GLuint)
 proc glFramebufferTextureLayer(target: GLenum, attachment: GLenum, texture: GLuint, level: GLint, layer: GLint)
 proc glBlitFramebuffer(srcX0: GLint, srcY0: GLint, srcX1: GLint, srcY1: GLint, dstX0: GLint, dstY0: GLint, dstX1: GLint, dstY1: GLint, mask: GLbitfield, filter: GLenum)
-proc glBindFramebuffer(target: GLenum, framebuffer: GLuint)
+# proc glBindFramebuffer(target: GLenum, framebuffer: GLuint)
 proc glGetFramebufferParameteriv(target: GLenum, pname: GLenum, params: ptr GLint)
 proc glInvalidateSubFramebuffer(target: GLenum, numAttachments: GLsizei, attachments: ptr GLenum, x: GLint, y: GLint, width: GLsizei, height: GLsizei)
 proc glFramebufferTexture(target: GLenum, attachment: GLenum, texture: GLuint, level: GLint)

@@ -7,7 +7,7 @@
 packageName   = "ngl"
 version       = "0.0.0"
 author        = "sOkam"
-description   = "Nim Graphics Library"
+description   = "n* Graphics Library"
 license       = "MIT"
 
 #___________________

@@ -5,7 +5,7 @@ As you've seen, it's also used for techniques like shadow volumes and some refle
 
 Another common use is when rendering a scene in multiple parts. For example, in a flight simulator, it's common for the cockpit (and aircraft exterior) and the terrain (and other aircraft) to be done in completely separate passes. This lets you use a lower-precision depth buffer without causing z fighting, because you can use different depth ranges for the near content and the far content. But if you do this, you can't reuse the same depth values for both passes. In this case, you can fill the stencil buffer when you're drawing the cockpit, and use the stencil test to avoid overdrawing the cockpit when you draw the terrain. (You need to do more to handle glass effects on the cockpit windows: this description is an oversimplification.) You can use similar techniques for drawing the player's weapon and/or hands in first-person shooters.
 
-The stencil buffer is used in many techniques: too many to list them all individually. But in general, if you want to have some render passes only affect some fragments, and the fragments you want to affect are those corresponding to particular objects or shaders, then the stencil buffer is a cheap way to enable that.
+The stencil buffer is used in many techniques. But in general, if you want to have some render passes only affect some fragments, and the fragments you want to affect are those corresponding to particular objects or shaders, then the stencil buffer is a cheap way to enable that.
 
 Another use is for filling non-convex polygons, e.g, Concavities and Self intersections
 

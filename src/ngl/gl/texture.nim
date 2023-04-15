@@ -35,11 +35,13 @@ const Repeat                    * = GL_REPEAT
 const FilterMag                 * = GL_TEXTURE_MAG_FILTER
 const FilterMin                 * = GL_TEXTURE_MIN_FILTER
 const Nearest                   * = GL_NEAREST
+const NearestMipmapLinear       * = GL_NEAREST_MIPMAP_LINEAR
 const Linear                    * = GL_LINEAR
 const LinearMipmapLinear        * = GL_LINEAR_MIPMAP_LINEAR
 ### Tex: Formats
 const Rgba                      * = GL_RGBA
 const Rgba8                     * = GL_RGBA8
+const Rgba16f                   * = GL_RGBA16F
 const uByte                     * = GL_UNSIGNED_BYTE
 const uInt                      * = GL_UNSIGNED_INT
 

@@ -68,7 +68,7 @@ proc register *(mesh :var RenderMesh) :void=
   if mesh.vao.hasColor: mesh.vao.register(mesh.vao.color, Attr.aColor)  # Register the Colors
   if mesh.vao.hasUV:    mesh.vao.register(mesh.vao.uv,    Attr.aUV)     # Register the UVs
   if mesh.vao.hasNorm:  mesh.vao.register(mesh.vao.norm,  Attr.aNorm)   # Register the Normals
-  mesh.mats.register                                                     # Register the Materials/Textures
+  if mesh.hasMats:      mesh.mats.register                              # Register the Materials/Textures
 #______________________________
 proc register *(model :var RenderModel) :void=
   ## Upload, bind and link all data and information 

@@ -16,13 +16,16 @@ const NotInitialized * = "UninitializedTexture"  ## Name for uninitialized Textu
 
 #_____________________________
 type FilterType * = enum 
-  Nearest       = gl.Nearest             ## Nearest fragment defines pixel color
-  Linear        = gl.Linear              ## Bilinear interpolation defines pixel color
-  LinearLinear  = gl.LinearMipmapLinear  ## Mipmap levels are also interpolated to find the pixel color
+  Nearest       = gl.Nearest              ## Nearest fragment defines pixel color
+  Linear        = gl.Linear               ## Bilinear interpolation defines pixel color
+  NearestLinear = gl.NearestMipmapLinear  ## Color is chosen from nearest fragment, but Mipmap levels are interpolated
+  LinearLinear  = gl.LinearMipmapLinear   ## Both Fragment and Mipmap levels are interpolated to find the color
 #____________________
 type Filter * = object
   `min`  *:FilterType  ## Minification  filter. Applied when size of a texel is reduced
   mag    *:FilterType  ## Magnification filter. Applied when size of a texel is augmented
+#____________________
+converter toFilter *(f :FilterType) :Filter=  result.min = f; result.mag = f
 
 #_____________________________
 type WrapType * = enum
@@ -32,6 +35,8 @@ type WrapType * = enum
 type Wrap * = object
   S  *:WrapType  ## Wrap type along X axis
   T  *:WrapType  ## Wrap type along Y axis
+#____________________
+converter toWrap *(w :WrapType) :Wrap=  result.S = w; result.T = w
 
 #_____________________________
 type Texture * = ref object of OpenGLObj

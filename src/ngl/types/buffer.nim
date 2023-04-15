@@ -70,13 +70,13 @@ type Target *{.pure.}= enum Color, Depth, Stencil
 type Targets * = set[Target]
 #____________________
 type RenderTarget * = ref object of OpenGLObj
-  kind      *:Target   ## Type of RenderTarget that is stored
-  size      *:Size     ## Size of the Target's texture
+  kind      *:Target  ## Type of RenderTarget that is stored
+  size      *:Size    ## Size of the Target's texture
   colors    *:GLEnum  ## Color components of the target  (aka. gl.internalFormat)
   format    *:GLEnum  ## Format of the Pixel data
   typ       *:GLEnum  ## Type of the Pixel data
-  attachID  *:uint32   ## Attachment ID of the RenderTarget. Color starts at id 0, and Depth/Stencil use their unique values
-  clearVal  *:Vec4     ## Value to clear the buffer to. Stores single components and/or converted to ints when its relevant
+  attachID  *:u32     ## Attachment ID of the RenderTarget. Color starts at id 0, and Depth/Stencil use their unique values
+  clearVal  *:Vec4    ## Value to clear the buffer to. Stores single components and/or converted to ints when its relevant
 #____________________
 type RenderTargets * = seq[RenderTarget]
 

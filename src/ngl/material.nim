@@ -11,7 +11,7 @@ import ./uniform
 proc newMaterial *(typ :MatType; tex :Texture= newTexture(); K :SomeNumber= 1) :Material=
   Material(typ: typ, tex: tex, K: K.uniform)
 
-template valid(mat :Material) :bool= mat.tex.valid()
+template valid (mat :Material) :bool=  mat.tex.valid()
 
 
 #____________________
